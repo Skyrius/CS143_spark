@@ -114,8 +114,12 @@ private[sql] class DiskPartition (
       var byteArray: Array[Byte] = null
 
       override def next() = {
-        // IMPLEMENT ME
-        null
+        if(hasNext()) {
+          currentIterator.next()
+        }
+        else {
+          null
+        }
       }
 
       override def hasNext() = {
@@ -145,7 +149,10 @@ private[sql] class DiskPartition (
    */
   def closeInput() = {
     // IMPLEMENT ME
-
+    if(!writtenToDisk && !data.isEmpty) {
+      spillPartitionToDisk()
+    }
+    outStream.close()
     data.clear()
     inputClosed = true
   }
