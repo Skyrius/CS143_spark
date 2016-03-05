@@ -37,11 +37,12 @@ protected [sql] final class GeneralDiskHashedRelation(partitions: Array[DiskPart
 
   override def getIterator() = {
     // IMPLEMENT ME
-    null
+    partitions.iterator
   }
 
   override def closeAllPartitions() = {
     // IMPLEMENT ME
+    partitions.foreach(_.closePartition())
   }
 }
 
@@ -65,7 +66,7 @@ private[sql] class DiskPartition (
   def insert(row: Row) = {
     // IMPLEMENT ME
     if (inputClosed) {
-      throw new SparkException("Input is closed."
+      throw new SparkException("Input is closed.")
     }
     data.add(row)
     if(measurePartitionSize() > blockSize) {
@@ -124,7 +125,12 @@ private[sql] class DiskPartition (
 
       override def hasNext() = {
         // IMPLEMENT ME
-        false
+        if(currentIterator.hasNext) {
+          true
+        }
+        else {
+          fetchNextChunk()
+        }
       }
 
       /**
@@ -135,7 +141,18 @@ private[sql] class DiskPartition (
        */
       private[this] def fetchNextChunk(): Boolean = {
         // IMPLEMENT ME
-        false
+        if(!chunkSizeIterator.hasNext){
+          false
+        }
+        else {
+          val size = chunkSizeIterator.next()
+          if(size == 0) {
+            return false
+          }
+          byteArray = CS143Utils.getNextChunkBytes(inStream, size, byteArray)
+          currentIterator = CS143Utils.getListFromBytes(byteArray).iterator.asScala
+          true
+        }
       }
     }
   }
