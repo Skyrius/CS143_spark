@@ -36,12 +36,12 @@ protected [sql] final class GeneralDiskHashedRelation(partitions: Array[DiskPart
     extends DiskHashedRelation with Serializable {
 
   override def getIterator() = {
-    // IMPLEMENT ME
+    // Oops implemented this ahead of time but eh
     partitions.iterator
   }
 
   override def closeAllPartitions() = {
-    // IMPLEMENT ME
+    // Same here
     partitions.foreach(_.closePartition())
   }
 }
@@ -209,6 +209,12 @@ private[sql] object DiskHashedRelation {
                 size: Int = 64,
                 blockSize: Int = 64000) = {
     // IMPLEMENT ME
-    null
+    val parts: Array[DiskPartition] = (0 until size).map(i => new DiskPartition(i.toString, blockSize)).toArray
+    input.foreach{(row: Row) => {
+      val ind = keyGenerator(row).hashCode() % size
+      parts(ind).insert(row) }
+    }
+    parts.foreach(_.closeInput())
+    new GeneralDiskHashedRelation(parts)
   }
 }
